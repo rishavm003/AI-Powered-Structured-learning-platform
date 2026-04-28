@@ -1,0 +1,8 @@
+name = "learnforge-proxy"
+main = "index.js"
+compatibility_date = "2024-01-01"
+
+[vars]
+ALLOWED_ORIGIN = "*"
+# For local dev, we use * but in production use your domain
+# Set ANTHROPIC_API_KEY as a secret via: wrangler secret put ANTHROPIC_API_KEY
