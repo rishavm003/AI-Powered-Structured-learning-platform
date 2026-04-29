@@ -60,93 +60,104 @@ export const ConfigPage: React.FC = () => {
   };
 
   return (
-    <div className="max-w-2xl mx-auto p-6 mt-10 bg-white dark:bg-gray-800 rounded-xl shadow-lg border border-transparent dark:border-gray-700">
-      <h1 className="text-3xl font-bold mb-6 text-center text-indigo-700 dark:text-indigo-400">LearnForge Roadmap Setup</h1>
+    <div className="relative min-h-screen flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
+      <div className="dark-bg-glow hidden dark:block"></div>
       
-      {error && (
-        <div className="mb-4 p-4 bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-300 rounded-lg flex justify-between items-center">
-          <span>{error}</span>
-          <button onClick={() => setError(null)} className="font-bold">×</button>
-        </div>
-      )}
+      <div className="w-full max-w-2xl glass-card p-8 relative z-10">
+        <h1 className="text-3xl sm:text-4xl font-extrabold mb-8 text-center text-gradient">LearnForge Setup</h1>
+        
+        {error && (
+          <div className="mb-6 p-4 bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 border border-red-100 dark:border-red-900/30 rounded-xl flex justify-between items-start shadow-sm">
+            <div className="flex items-start gap-3">
+              <svg className="w-5 h-5 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+              <span className="text-sm font-medium">{error}</span>
+            </div>
+            <button onClick={() => setError(null)} className="text-red-400 hover:text-red-600 dark:hover:text-red-300 transition-colors">
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+            </button>
+          </div>
+        )}
 
-      <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
-        <div>
-          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">What do you want to learn?</label>
-          <input 
-            {...register('topic')} 
-            className="w-full p-2 border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-indigo-500 outline-none"
-            placeholder="e.g., React.js, Python for Data Science"
-            disabled={isLoading}
-          />
-          {errors.topic && <p className="text-red-500 text-sm mt-1">{errors.topic.message}</p>}
-        </div>
-
-        <div className="grid grid-cols-2 gap-4">
+        <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
           <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Duration (Days)</label>
+            <label className="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-2">What do you want to master?</label>
             <input 
-              type="number" 
-              {...register('days', { valueAsNumber: true })} 
-              className="w-full p-2 border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-indigo-500 outline-none"
+              {...register('topic')} 
+              className="w-full p-3.5 border border-gray-200 dark:border-white/10 rounded-xl bg-gray-50 dark:bg-[#0b0f19] text-gray-900 dark:text-white focus:ring-2 focus:ring-indigo-500 focus:border-transparent outline-none transition-all duration-300 shadow-sm"
+              placeholder="e.g., Python, UI/UX Design, Quantum Computing"
               disabled={isLoading}
             />
-            {errors.days && <p className="text-red-500 text-sm mt-1">{errors.days.message}</p>}
+            {errors.topic && <p className="text-red-500 text-xs font-bold mt-2">{errors.topic.message}</p>}
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+            <div>
+              <label className="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-2">Duration (Days)</label>
+              <input 
+                type="number" 
+                {...register('days', { valueAsNumber: true })} 
+                className="w-full p-3.5 border border-gray-200 dark:border-white/10 rounded-xl bg-gray-50 dark:bg-[#0b0f19] text-gray-900 dark:text-white focus:ring-2 focus:ring-indigo-500 focus:border-transparent outline-none transition-all duration-300 shadow-sm"
+                disabled={isLoading}
+              />
+              {errors.days && <p className="text-red-500 text-xs font-bold mt-2">{errors.days.message}</p>}
+            </div>
+
+            <div>
+              <label className="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-2">Pace (Hours / Day)</label>
+              <select 
+                {...register('hoursPerDay', { valueAsNumber: true })}
+                className="w-full p-3.5 border border-gray-200 dark:border-white/10 rounded-xl bg-gray-50 dark:bg-[#0b0f19] text-gray-900 dark:text-white focus:ring-2 focus:ring-indigo-500 focus:border-transparent outline-none transition-all duration-300 shadow-sm appearance-none"
+                disabled={isLoading}
+              >
+                {[0.5, 1, 1.5, 2, 3, 4, 6, 8].map(h => (
+                  <option key={h} value={h} className="dark:bg-[#151c2c]">{h} {h === 1 ? 'hour' : 'hours'}</option>
+                ))}
+              </select>
+              {errors.hoursPerDay && <p className="text-red-500 text-xs font-bold mt-2">{errors.hoursPerDay.message}</p>}
+            </div>
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Hours / Day</label>
-            <select 
-              {...register('hoursPerDay', { valueAsNumber: true })}
-              className="w-full p-2 border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-indigo-500 outline-none"
-              disabled={isLoading}
-            >
-              {[0.5, 1, 1.5, 2, 3, 4, 6, 8].map(h => (
-                <option key={h} value={h} className="dark:bg-gray-800">{h} {h === 1 ? 'hour' : 'hours'}</option>
+            <label className="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-3">Target Depth</label>
+            <div className="flex flex-wrap gap-3">
+              {['beginner', 'intermediate', 'expert'].map((d) => (
+                <label key={d} className="flex-1 relative">
+                  <input 
+                    type="radio" 
+                    {...register('depth')} 
+                    value={d} 
+                    className="peer sr-only"
+                    disabled={isLoading}
+                  />
+                  <div className="p-3 text-center rounded-xl border border-gray-200 dark:border-white/10 bg-gray-50 dark:bg-[#0b0f19] text-gray-500 dark:text-gray-400 cursor-pointer transition-all duration-300 peer-checked:border-indigo-500 peer-checked:bg-indigo-50 dark:peer-checked:bg-indigo-900/20 peer-checked:text-indigo-700 dark:peer-checked:text-indigo-400 font-bold capitalize hover:bg-gray-100 dark:hover:bg-white/5">
+                    {d}
+                  </div>
+                </label>
               ))}
-            </select>
-            {errors.hoursPerDay && <p className="text-red-500 text-sm mt-1">{errors.hoursPerDay.message}</p>}
+            </div>
+            {errors.depth && <p className="text-red-500 text-xs font-bold mt-2">{errors.depth.message}</p>}
           </div>
-        </div>
 
-        <div>
-          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Target Depth</label>
-          <div className="flex space-x-4">
-            {['beginner', 'intermediate', 'expert'].map((d) => (
-              <label key={d} className="flex items-center text-gray-700 dark:text-gray-300">
-                <input 
-                  type="radio" 
-                  {...register('depth')} 
-                  value={d} 
-                  className="mr-2 h-4 w-4 text-indigo-600 border-gray-300 dark:border-gray-600 focus:ring-indigo-500"
-                  disabled={isLoading}
-                />
-                <span className="capitalize">{d}</span>
-              </label>
-            ))}
-          </div>
-          {errors.depth && <p className="text-red-500 text-sm mt-1">{errors.depth.message}</p>}
-        </div>
-
-        <button 
-          type="submit" 
-          disabled={isLoading}
-          className="w-full py-3 px-4 bg-indigo-600 text-white rounded-lg font-bold hover:bg-indigo-700 disabled:bg-indigo-300 dark:disabled:bg-indigo-900/50 transition-colors"
-        >
-          {isLoading ? (
-            <span className="flex items-center justify-center">
-              <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-              </svg>
-              {loadingStatus || 'Generating Roadmap...'}
+          <button 
+            type="submit" 
+            disabled={isLoading}
+            className="w-full py-4 px-6 mt-4 bg-gradient-primary rounded-xl font-extrabold text-lg shadow-[0_0_20px_rgba(79,70,229,0.3)] hover:shadow-[0_0_25px_rgba(79,70,229,0.5)] disabled:opacity-70 disabled:cursor-not-allowed transition-all duration-300 relative overflow-hidden group"
+          >
+            <div className="absolute inset-0 bg-white/20 translate-y-full group-hover:translate-y-0 transition-transform duration-300 ease-out"></div>
+            <span className="relative z-10 flex items-center justify-center">
+              {isLoading ? (
+                <>
+                  <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                  </svg>
+                  {loadingStatus || 'Generating...'}
+                </>
+              ) : 'Forging Your Roadmap'}
             </span>
-          ) : 'Generate Roadmap'}
-        </button>
-        {isLoading && loadingStatus && (
-          <p className="text-center text-sm text-indigo-600 dark:text-indigo-400 animate-pulse mt-2">{loadingStatus}</p>
-        )}
-      </form>
+          </button>
+        </form>
+      </div>
     </div>
   );
 };

@@ -15,11 +15,12 @@ interface RoadmapState {
   setLoading: (loading: boolean) => void;
   setError: (error: string | null) => void;
   clearRoadmap: () => void;
+  updateSubtopicTheory: (dayNum: number, subtopicIdx: number, theory: string) => void;
 }
 
 export const useRoadmapStore = create<RoadmapState>()(
   persist(
-    (set) => ({
+    (set, get) => ({
       config: null,
       roadmap: [],
       isLoading: false,
@@ -29,6 +30,22 @@ export const useRoadmapStore = create<RoadmapState>()(
       setLoading: (isLoading) => set({ isLoading }),
       setError: (error) => set({ error, isLoading: false }),
       clearRoadmap: () => set({ config: null, roadmap: [], error: null }),
+      
+      updateSubtopicTheory: (dayNum, subtopicIdx, theory) => {
+        set((state) => {
+          const newRoadmap = [...state.roadmap];
+          const dayIdx = newRoadmap.findIndex((d) => d.dayNumber === dayNum);
+          if (dayIdx !== -1) {
+            const newDay = { ...newRoadmap[dayIdx] };
+            const newSubtopics = [...newDay.subtopics];
+            newSubtopics[subtopicIdx] = { ...newSubtopics[subtopicIdx], theory };
+            newDay.subtopics = newSubtopics;
+            newRoadmap[dayIdx] = newDay;
+          }
+          return { roadmap: newRoadmap };
+        });
+        get().syncToCloud();
+      },
       
       syncToCloud: async () => {
         const { config, roadmap } = get();

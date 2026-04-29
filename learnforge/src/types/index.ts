@@ -13,6 +13,7 @@ export interface Subtopic {
   name: string;
   description: string;
   estimatedMinutes: number;
+  theory?: string;
 }
 
 export interface Resource {
