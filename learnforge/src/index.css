@@ -1,3 +1,70 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+@layer base {
+  body {
+    font-family: 'Inter', sans-serif;
+    @apply bg-gray-50 text-gray-900;
+  }
+
+  .dark body {
+    @apply bg-[#0b0f19] text-gray-100;
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    font-family: 'Outfit', sans-serif;
+  }
+}
+
+@layer utilities {
+  .glass {
+    @apply bg-white/70 backdrop-blur-md border border-white/20 shadow-sm dark:bg-[#1a2333]/80 dark:border-white/10 dark:shadow-none;
+  }
+  
+  .glass-card {
+    @apply bg-white dark:bg-[#151c2c] border border-gray-100 dark:border-white/5 rounded-2xl shadow-sm hover:shadow-md transition-all duration-300;
+  }
+  
+  .text-gradient {
+    @apply bg-clip-text text-transparent bg-gradient-to-r from-indigo-500 to-purple-600 dark:from-indigo-400 dark:to-purple-500;
+  }
+  
+  .bg-gradient-primary {
+    @apply bg-gradient-to-br from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white transition-all duration-300;
+  }
+}
+
+/* Custom fluid background for dark mode */
+.dark-bg-glow {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 500px;
+  background: radial-gradient(circle at 50% -20%, rgba(79, 70, 229, 0.15) 0%, rgba(11, 15, 25, 0) 70%);
+  pointer-events: none;
+  z-index: -1;
+}
+
+/* Indeterminate loading bar for TheoryLoader */
+@keyframes loadingBar {
+  0%   { transform: translateX(-100%) scaleX(0.3); }
+  50%  { transform: translateX(50%)  scaleX(0.7); }
+  100% { transform: translateX(100%) scaleX(1); }
+}
+
+.animate-loading-bar {
+  animation: loadingBar 1.6s ease-in-out infinite;
+  transform-origin: left;
+}
+
+/* Fade-in for cycling messages */
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(4px); }
+  to   { opacity: 1; transform: translateY(0);   }
+}
+
+.animate-fade-in {
+  animation: fadeIn 0.4s ease-out forwards;
+}

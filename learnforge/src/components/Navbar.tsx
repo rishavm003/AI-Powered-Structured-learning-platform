@@ -57,6 +57,12 @@ export const Navbar: React.FC = () => {
           {hasRoadmap && (
             <>
               <button
+                onClick={() => navigate('/setup')}
+                className="text-sm font-bold text-indigo-600 dark:text-indigo-400 hover:text-white hover:bg-indigo-600 dark:hover:bg-indigo-500 px-3 py-1.5 rounded-lg transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 border border-indigo-200 dark:border-indigo-900 shadow-sm"
+              >
+                + New Roadmap
+              </button>
+              <button
                 onClick={() => navigate('/dashboard')}
                 className="text-sm font-medium text-gray-600 dark:text-gray-300 hover:text-indigo-600 dark:hover:text-indigo-400 px-3 py-1.5 rounded-lg transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500"
               >

@@ -55,6 +55,7 @@ const AppShell: React.FC = () => {
       <main className="pb-16">
         <Routes>
           <Route path="/" element={hasRoadmap ? <Navigate to="/dashboard" /> : <ConfigPage />} />
+          <Route path="/setup" element={<ConfigPage />} />
           <Route path="/dashboard" element={hasRoadmap ? <DashboardPage /> : <Navigate to="/" />} />
           <Route path="/day/:dayNumber" element={hasRoadmap ? <DayViewPage /> : <Navigate to="/" />} />
           <Route path="/quiz-results" element={hasRoadmap ? <QuizResultsPage /> : <Navigate to="/" />} />

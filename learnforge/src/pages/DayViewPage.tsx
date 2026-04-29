@@ -8,18 +8,22 @@ import { QAChat } from '../components/QAChat';
 import { ResourceCard } from '../components/ResourceCard';
 import { MNCProjectCard } from '../components/MNCProjectCard';
 import toast, { Toaster } from 'react-hot-toast';
+import ReactMarkdown from 'react-markdown';
+import { generateTheory } from '../agents/theoryAgent';
+import { TheoryLoader } from '../components/TheoryLoader';
 
 export const DayViewPage: React.FC = () => {
   const { dayNumber } = useParams<{ dayNumber: string }>();
   const navigate = useNavigate();
   
-  const { roadmap } = useRoadmapStore();
-  const { markDayComplete, saveQuizScore } = useProgressStore();
+  const { roadmap, config, updateSubtopicTheory } = useRoadmapStore();
+  const { markDayComplete, saveQuizScore, logSession } = useProgressStore();
   
   const currentDayNum = parseInt(dayNumber || '1', 10);
   const day = roadmap.find(d => d.dayNumber === currentDayNum);
   
   const [checkedTopics, setCheckedTopics] = useState<Record<number, boolean>>({});
+  const [generatingTheory, setGeneratingTheory] = useState<Record<number, boolean>>({});
 
   if (!day) {
     return (
@@ -32,10 +36,35 @@ export const DayViewPage: React.FC = () => {
   }
 
   const handleToggleTopic = (idx: number) => {
+    const isNowChecked = !checkedTopics[idx];
     setCheckedTopics(prev => ({
       ...prev,
-      [idx]: !prev[idx]
+      [idx]: isNowChecked
     }));
+    
+    // Automatically log study activity to populate the heatmap
+    if (isNowChecked) {
+      logSession({
+        date: new Date().toISOString(),
+        dayNumber: currentDayNum,
+        minutesSpent: day.subtopics[idx].estimatedMinutes || 15
+      });
+      toast.success(`Logged ${day.subtopics[idx].estimatedMinutes || 15} minutes of study time!`, { icon: '⏱️' });
+    }
+  };
+
+  const handleGenerateTheory = async (idx: number) => {
+    if (!config || !day) return;
+    setGeneratingTheory(prev => ({ ...prev, [idx]: true }));
+    try {
+      const theory = await generateTheory(config.topic, day.subtopics[idx], config.depth);
+      updateSubtopicTheory(currentDayNum, idx, theory);
+      toast.success('Theory lesson generated successfully!');
+    } catch (e) {
+      toast.error('Failed to generate theory. Please try again.');
+    } finally {
+      setGeneratingTheory(prev => ({ ...prev, [idx]: false }));
+    }
   };
 
   const handleMarkComplete = () => {
@@ -103,9 +132,33 @@ export const DayViewPage: React.FC = () => {
                       {topic.name}
                     </h3>
                     <p className="text-sm text-gray-500 dark:text-gray-400">{topic.description}</p>
-                    <span className="inline-block mt-2 text-[10px] font-bold bg-indigo-50 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400 px-2 py-0.5 rounded uppercase tracking-wider">
-                      {topic.estimatedMinutes} min
-                    </span>
+                    <div className="flex items-center gap-4 mt-2">
+                      <span className="inline-block text-[10px] font-bold bg-indigo-50 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400 px-2 py-0.5 rounded uppercase tracking-wider">
+                        {topic.estimatedMinutes} min
+                      </span>
+                      {!topic.theory && (
+                        <button
+                          onClick={() => handleGenerateTheory(idx)}
+                          disabled={generatingTheory[idx]}
+                          className="text-xs font-bold text-purple-600 dark:text-purple-400 hover:text-purple-700 disabled:opacity-50 flex items-center gap-1 transition-colors"
+                        >
+                          {generatingTheory[idx] ? (
+                            <>
+                              <svg className="animate-spin h-3 w-3" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
+                              Generating...
+                            </>
+                          ) : '📖 Generate Theory Lesson'}
+                        </button>
+                      )}
+                    </div>
+                    {generatingTheory[idx] && (
+                      <TheoryLoader topicName={topic.name} />
+                    )}
+                    {!generatingTheory[idx] && topic.theory && (
+                      <div className="mt-4 p-4 sm:p-5 bg-gray-50 dark:bg-gray-900/50 rounded-xl border border-gray-100 dark:border-white/5 prose prose-sm dark:prose-invert max-w-none shadow-inner">
+                        <ReactMarkdown>{topic.theory}</ReactMarkdown>
+                      </div>
+                    )}
                   </div>
                 </div>
               ))}
@@ -152,7 +205,15 @@ export const DayViewPage: React.FC = () => {
             <div className="p-6">
               <QuizWidget
                 questions={day.quiz}
-                onComplete={(score) => saveQuizScore(currentDayNum, score)}
+                onComplete={(score) => {
+                  saveQuizScore(currentDayNum, score);
+                  logSession({
+                    date: new Date().toISOString(),
+                    dayNumber: currentDayNum,
+                    minutesSpent: 10
+                  });
+                  toast.success('Logged 10 minutes of study time for completing the quiz!', { icon: '⏱️' });
+                }}
               />
             </div>
           </section>
