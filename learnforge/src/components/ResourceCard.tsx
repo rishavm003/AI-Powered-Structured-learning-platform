@@ -5,12 +5,7 @@ interface Props {
   resource: Resource;
 }
 
-const TypeBadgeConfig: Record<Resource['type'], { label: string; bg: string; text: string }> = {
-  doc:     { label: 'DOC',     bg: 'bg-blue-100',  text: 'text-blue-700' },
-  github:  { label: 'GITHUB',  bg: 'bg-gray-800',  text: 'text-gray-100' },
-  video:   { label: 'VIDEO',   bg: 'bg-red-100',   text: 'text-red-700' },
-  article: { label: 'ARTICLE', bg: 'bg-gray-100',  text: 'text-gray-600' },
-};
+
 
 function DocIcon() {
   return (

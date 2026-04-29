@@ -2,7 +2,10 @@ import LZString from 'lz-string';
 import { PROMPT_VERSION } from '../utils/promptVersions';
 import { safeSet } from '../utils/storageGuard';
 
-const PROXY_URL = import.meta.env.VITE_PROXY_URL || "http://localhost:11434/api/chat";
+import { ENV } from '../utils/envCheck';
+
+const PROXY_URL = ENV.PROXY_URL;
+const AUTH_TOKEN = ENV.AUTH_TOKEN;
 
 const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 
@@ -13,12 +16,20 @@ interface CallAIOptions {
   rawText?: boolean;
 }
 
+import { usePrefsStore } from '../store/prefsStore';
+
 export async function callAI(
   systemPrompt: string,
   userPrompt: string,
   cacheKeyOrOptions?: string | CallAIOptions,
   skipCache?: boolean
 ): Promise<any> {
+  const { aiModel: rawAiModel } = usePrefsStore.getState();
+  // Strip provider prefix if exists (e.g. nvidia_nim/model-name -> model-name)
+  const aiModel = rawAiModel.includes('/') && (rawAiModel.startsWith('nvidia_nim/') || rawAiModel.startsWith('open_router/'))
+    ? rawAiModel.split('/').slice(1).join('/')
+    : rawAiModel;
+  
   // Support both old callAI(s, u, key, skip) and new callAI(s, u, { ... })
   let options: CallAIOptions = {};
   if (typeof cacheKeyOrOptions === 'string') {
@@ -45,13 +56,15 @@ export async function callAI(
     }
   }
 
+  // NVIDIA NIM / OpenAI payload format
   const payload = {
-    model: "phi4-mini",
-    stream: false,
+    model: "meta/llama-3.1-8b-instruct",
+    max_tokens: 4000,
     messages: [
       { role: "system", content: systemPrompt },
       { role: "user", content: userPrompt }
-    ]
+    ],
+    stream: false
   };
 
   let attempt = 0;
@@ -60,9 +73,12 @@ export async function callAI(
 
   while (attempt < maxAttempts) {
     try {
-      const response = await fetch(PROXY_URL, {
+      const response = await fetch(`${PROXY_URL}/api/ai`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: { 
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${AUTH_TOKEN}`
+        },
         body: JSON.stringify(payload)
       });
 
@@ -76,9 +92,11 @@ export async function callAI(
       }
 
       const data = await response.json();
-      const contentText: string = data.message?.content;
+      
+      // OpenAI/NIM format: data.choices[0].message.content
+      const contentText: string = data.choices?.[0]?.message?.content;
       if (!contentText) {
-        throw new Error("Empty content in response");
+        throw new Error(`Empty content in response: ${JSON.stringify(data)}`);
       }
 
       // rawText mode — return the string directly, no JSON parsing

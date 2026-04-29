@@ -16,31 +16,55 @@ const daySchema = z.object({
   title: z.string(),
   subtopics: z.array(subtopicSchema),
   goals: z.array(z.string()),
-  resources: z.array(z.any()),
-  mncProjects: z.array(z.any()),
-  quiz: z.array(z.any()),
+  resources: z.array(z.any()).optional().default([]),
+  mncProjects: z.array(z.any()).optional().default([]),
+  quiz: z.array(z.any()).optional().default([]),
 });
 
-const roadmapSchema = z.array(daySchema);
+const roadmapSchema = z.object({
+  title: z.string().optional().default('Learning Roadmap'),
+  description: z.string().optional().default(''),
+  days: z.array(daySchema),
+});
+
+function sanitizeRoadmap(raw: any): any {
+  if (!raw) return { title: 'Learning Roadmap', description: '', days: [] };
+  
+  let daysArray = [];
+  if (Array.isArray(raw)) {
+    daysArray = raw;
+  } else if (raw.days && Array.isArray(raw.days)) {
+    daysArray = raw.days;
+  }
+  
+  const sanitizedDays = daysArray.map((day: any, index: number) => ({
+    dayNumber: day?.dayNumber ?? day?.day ?? (index + 1),
+    title: day?.title || day?.topic || `Day ${index + 1}`,
+    subtopics: Array.isArray(day?.subtopics) ? day.subtopics.map((st: any) => ({
+      name: st?.name || st?.topic || 'Subtopic',
+      description: st?.description || st?.details || '',
+      estimatedMinutes: st?.estimatedMinutes || st?.time || 30
+    })) : [],
+    goals: Array.isArray(day?.goals) ? day.goals : [],
+    resources: Array.isArray(day?.resources) ? day.resources : [],
+    mncProjects: Array.isArray(day?.mncProjects) ? day.mncProjects : [],
+    quiz: Array.isArray(day?.quiz) ? day.quiz : []
+  }));
+
+  return {
+    title: raw.title || 'Learning Roadmap',
+    description: raw.description || '',
+    days: sanitizedDays
+  };
+}
+
+import { SYSTEM_PROMPTS } from '../config/prompts';
 
 export async function generateRoadmap(
   config: RoadmapConfig,
   onStatusChange?: (msg: string) => void
 ): Promise<Day[]> {
-  const systemPrompt = `You are a structured learning curriculum designer. Return ONLY valid JSON — no markdown, no explanation.
-Return an array of Day objects. Each Day has:
-{
-  "dayNumber": number,
-  "title": string,
-  "subtopics": [{ "name": string, "description": string, "estimatedMinutes": number }],
-  "goals": [string],
-  "resources": [],
-  "mncProjects": [],
-  "quiz": []
-}
-Resources, mncProjects, and quiz are empty arrays — they are filled by other agents.
-Be realistic about estimatedMinutes — they must sum to approximately hoursPerDay * 60.
-Depth levels: beginner = fundamentals only, intermediate = practical application, expert = internals + trade-offs.`;
+  const systemPrompt = SYSTEM_PROMPTS.ROADMAP_GENERATOR;
 
   const userPrompt = `Create a ${config.days}-day learning roadmap for: ${config.topic}
 Hours per day: ${config.hoursPerDay}
@@ -51,8 +75,14 @@ Return exactly ${config.days} Day objects in a JSON array.`;
 
   onStatusChange?.('Generating your roadmap...');
   const jsonResponse = await callAI(systemPrompt, userPrompt, configHash);
-  const validated = roadmapSchema.parse(jsonResponse);
-  let days = validated as Day[];
+  
+  console.log("Raw AI Response:", JSON.stringify(jsonResponse, null, 2));
+
+  const sanitized = sanitizeRoadmap(jsonResponse);
+  console.log("Sanitized Response:", JSON.stringify(sanitized, null, 2));
+
+  const validated = roadmapSchema.parse(sanitized);
+  let days = validated.days as Day[];
 
   // Pre-generate quizzes for all days in parallel
   onStatusChange?.(`Generating quizzes for all ${days.length} days...`);
