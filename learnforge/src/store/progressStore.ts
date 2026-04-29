@@ -2,6 +2,8 @@ import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import type { Progress, SessionLog } from '../types';
 import { checkAndWarn } from '../utils/storageGuard';
+import { getUserId } from '../utils/userId';
+import { ENV } from '../utils/envCheck';
 
 interface ProgressState {
   progress: Progress;
@@ -11,6 +13,8 @@ interface ProgressState {
   updateStreak: () => void;
   getCompletionPercent: (dayNum: number) => number;
   getTotalCompletionPercent: (totalDays: number) => number;
+  syncToCloud: () => Promise<void>;
+  loadFromCloud: () => Promise<void>;
 }
 
 const initialProgress: Progress = {
@@ -34,7 +38,7 @@ export const useProgressStore = create<ProgressState>()(
           }
         }));
         get().updateStreak();
-        // Since we use persist middleware, state automatically syncs to localStorage.
+        get().syncToCloud();
       },
       logSession: (log) => {
         set((state) => ({
@@ -44,13 +48,17 @@ export const useProgressStore = create<ProgressState>()(
           }
         }));
         checkAndWarn();
+        get().syncToCloud();
       },
-      saveQuizScore: (dayNum, score) => set((state) => ({
-        progress: {
-          ...state.progress,
-          quizScores: { ...state.progress.quizScores, [dayNum]: score }
-        }
-      })),
+      saveQuizScore: (dayNum, score) => {
+        set((state) => ({
+          progress: {
+            ...state.progress,
+            quizScores: { ...state.progress.quizScores, [dayNum]: score }
+          }
+        }));
+        get().syncToCloud();
+      },
       updateStreak: () => set((state) => {
         const today = new Date().toISOString().split('T')[0];
         const last = state.progress.lastActiveDate;
@@ -87,6 +95,32 @@ export const useProgressStore = create<ProgressState>()(
         if (totalDays === 0) return 0;
         const sum = Object.values(get().progress.dayCompletionMap).reduce((a, b) => a + b, 0);
         return Math.round(sum / totalDays);
+      },
+      
+      syncToCloud: async () => {
+        try {
+          await fetch(`${ENV.PROXY_URL}/api/save-progress`, {
+            method: 'POST',
+            body: JSON.stringify({
+              user_id: getUserId(),
+              data: get().progress
+            })
+          });
+        } catch (e) {
+          console.error("Failed to sync progress to D1", e);
+        }
+      },
+
+      loadFromCloud: async () => {
+        try {
+          const res = await fetch(`${ENV.PROXY_URL}/api/load-progress?user_id=${getUserId()}`);
+          const result = await res.json();
+          if (result && result.data) {
+            set({ progress: JSON.parse(result.data) });
+          }
+        } catch (e) {
+          console.error("Failed to load progress from D1", e);
+        }
       }
     }),
     {

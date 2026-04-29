@@ -3,16 +3,16 @@
 ## Architecture
 SPA, React 18 + Vite + TypeScript + Tailwind CSS (class dark mode)
 
-## Proxy
-Cloudflare Worker at `/worker` — stores Anthropic API key as CF Secret (`ANTHROPIC_API_KEY`).
-Local dev: `npx wrangler dev --port 8787` inside `/worker`
+## API Architecture
+Direct connection to NVIDIA NIM API (OpenAI-compatible) at `https://integrate.api.nvidia.com/v1`.
+Local dev: Uses `.env.local` for `VITE_NVIDIA_API_KEY`.
 
 ## Agents (`/src/agents`)
 | File | Purpose |
 |---|---|
-| `roadmapAgent.ts` | Generates Day[] from Claude, pre-loads quizzes + resources + MNC projects |
+| `roadmapAgent.ts` | Generates Day[] via NVIDIA NIM, pre-loads quizzes + resources + MNC projects |
 | `quizAgent.ts` | Generates 5 MCQs per day, cached per day |
-| `qaAgent.ts` | Fresh Claude call per question, returns raw markdown |
+| `qaAgent.ts` | Fresh AI call per question, returns raw markdown |
 | `resourceAgent.ts` | DuckDuckGo Instant Answer API (no key needed), 24h cache |
 | `mncProjectAgent.ts` | Generates 3 FAANG-style project specs, cached per config |
 
@@ -44,7 +44,5 @@ Config form → Roadmap generation → Dashboard → DayView → Quiz → Q&A �
 
 ## Deploy
 - Frontend: Cloudflare Pages (build: `npm run build`, output: `dist`)
-- Worker: `cd worker && wrangler deploy`
-- Set `VITE_PROXY_URL` env var in CF Pages to the worker URL
-- Set `ANTHROPIC_API_KEY` via `wrangler secret put ANTHROPIC_API_KEY`
-- Set `ALLOWED_ORIGIN` in `wrangler.toml` to your CF Pages URL
+- Set `VITE_PROXY_URL` to `https://integrate.api.nvidia.com/v1/chat/completions`
+- Set `VITE_NVIDIA_API_KEY` to your NVIDIA API Key

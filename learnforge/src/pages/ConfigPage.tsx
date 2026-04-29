@@ -30,6 +30,11 @@ export const ConfigPage: React.FC = () => {
   const { setConfig, setRoadmap, setLoading, setError, isLoading, error } = useRoadmapStore();
   const [loadingStatus, setLoadingStatus] = React.useState('');
 
+  React.useEffect(() => {
+    // Clear any "ghost" errors loaded from localStorage when the page opens
+    setError(null);
+  }, [setError]);
+
   const onSubmit = async (data: ConfigFormData) => {
     setLoading(true);
     setError(null);

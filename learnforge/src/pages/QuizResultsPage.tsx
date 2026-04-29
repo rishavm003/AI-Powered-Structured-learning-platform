@@ -172,6 +172,5 @@ export const QuizResultsPage: React.FC = () => {
         </div>
       </div>
     </div>
-    </div>
   );
 };
